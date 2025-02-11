@@ -1,0 +1,20 @@
+-- MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_DRUGS.sql
+-- RM 2024.09.10 - Creation
+-- RM 2024.09.17 - Added NOT NULL constraints
+
+
+USE DATABASE MCHS_CUSTOM_DB;
+--CREATE SCHEMA SPRUCE;
+--DROP TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_DRUGS;
+
+CREATE TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_DRUGS (
+      SURGICAL_CASE_IDENTIFIER                VARCHAR(400) COMMENT 'Unique surgical case identifier',
+      DRUG_NAMES                              VARCHAR(400) COMMENT 'Name of drug',
+      DRUG_ROUTES                             VARCHAR(400) COMMENT 'Route of administration (IV, NG, injection, etc.)',
+      DRUG_ADMIN_TS                           TIMESTAMP_LTZ(9) COMMENT 'Drug is administered to the patient TS'
+);
+
+
+
+ALTER TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_DRUGS MODIFY (
+     COLUMN SURGICAL_CASE_IDENTIFIER SET NOT NULL);

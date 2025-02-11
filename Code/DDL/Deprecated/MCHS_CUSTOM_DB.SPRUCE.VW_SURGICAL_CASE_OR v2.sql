@@ -1,0 +1,97 @@
+-- MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR.sql
+-- RM 2025.01.13 - Creation
+
+CREATE OR REPLACE VIEW MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR AS (
+SELECT SC.CASE_NUM                                     AS SURGICAL_CASE_IDENTIFIER
+--     SC.SURG_CASE_ID                                 AS SURGICAL_CASE_IDENTIFIER
+      ,SC.ENCOUNTER_ID                                 AS ENCOUNTER_IDENTIFIER
+      ,PAT.MRN                                         AS MEDICAL_RECORD_NUMBER
+      ,PAT.GENDER                                      AS PATIENT_GENDER
+      ,ROUND(DATEDIFF(DAY, PAT.BIRTH_DATE, 
+         SC.SURG_START_DT_TM)/365.24,1)                AS PATIENT_AGE_IN_YEARS
+      ,ROUND(DATEDIFF(DAY, PAT.BIRTH_DATE, 
+         SC.SURG_START_DT_TM)/(365.24/12),1)           AS PATIENT_AGE_IN_MONTHS
+      ,PAT.RACE                                        AS PATIENT_RACE
+      ,PAT.ETHNICITY                                   AS PATIENT_ETHNICITY
+      ,PAT.LANGUAGE                                    AS PATIENT_LANGUAGE
+      ,HT_WT.HEIGHT                                    AS HEIGHT_CM
+      ,HT_WT.WEIGHT                                    AS WEIGHT_KG
+      ,SCA.ASA_CLASS                                   AS ASA_SCORE
+      ,E.ENCOUNTER_TYPE_DESC                           AS PATIENT_CLASS
+      ,E.FINANCIAL_CLASS_DESC                          AS PAYOR_DESCRIPTION
+      ,PAT.ZIP_CODE                                    AS ZIP_CODE
+      ,SC.SURG_AREA                                    AS FACILITY_NAME
+      ,SC.ROOM                                         AS OR_ROOM_IDENTIFIER
+      ,SC.PRIMARY_PROCEDURE                            AS PRIMARY_PROCEDURE_NAME
+      ,CASE
+         WHEN SCA.NBR_PROCS > 1 THEN 'Yes'
+         ELSE 'No'
+       END                                             AS MULTIPLE_PROCEDURES
+      ,'?' AS AIRWAY_GRADE
+      ,SC.SURG_START_DT_TM                             AS SURGERY_START_TS
+      ,SC.PRIMARY_SURGEON                              AS SURGEON_NAME
+      ,SC.SURG_SPECIALTY                               AS SURGICAL_SPECIALTY
+      ,SC.PT_IN_ROOM_DT_TM                             AS WHEELED_INTO_OR_TS 
+      ,SC.SURG_STOP_DT_TM                              AS SURGERY_CLOSE_TS
+      ,SC.PT_DISCH_PACUI_DT_TM                         AS PACU_DISCHARGE_TS
+      ,SC.PT_OUT_ROOM_DT_TM                            AS WHEELED_OUT_OF_OR_TS
+      ,'?' AS PACU_RESCUE_NAUSEA_MEDS
+      ,'?' AS PACU_RESCUE_IV_OPIOIDS
+      ,'?' AS PACU_RESCUE_ORAL_OPIOIDS
+      ,'?' AS PACU_RESCUE_FENTANYL
+      ,'?' AS PACU_RESCUE_MORPHINE
+      ,'?' AS PACU_RESCUE_OXYCODONE
+      ,'?' AS PACU_RESCUE_HYDROMORPHONE
+      ,SC.SCH_START_DT_TM                              AS SCHEDULED_START_TS
+      ,SC.ANESTHESIA_START_DT_TM                       AS ANESTHESIA_START_TS
+      ,SC.ANESTHESIA_READY_DT_TM                       AS ANESTHESIA_READY_TS
+      ,SC.ANESTHESIA_STOP_DT_TM                        AS ANESTHESIA_STOP_TS
+      ,COALESCE(E.INPATIENT_ADMIT_DT_TM, 
+                E.ACTUAL_ARRIVAL_DT_TM, 
+                E.REGISTRATION_DT_TM)                  AS PATIENT_ADMITTED_TO_HOSPITAL_TS      
+      ,E.DISCHARGE_DT_TM                               AS HOSPITAL_DISCHARGE_TS
+      ,'?' AS PATIENT_FIRST_ADMITTED_TO_ICU_TS
+      ,'?' AS PATIENT_FIRST_DISCHARGED_FROM_ICU_TS
+      ,'?' AS PATIENT_EXPIRED_TS
+      ,SC.SCH_DURATION                                 AS SCHEDULED_SURGERY_TIME_MIN
+FROM MCHS_CUSTOM_DB.ODS.CDS_F_SURGERY_CASE    SC
+JOIN MCHS_CUSTOM_DB.ODS.CDS_F_ENCOUNTER       E
+  ON SC.ENCOUNTER_ID = E.ENCOUNTER_ID
+JOIN MCHS_CUSTOM_DB.ODS.CDS_D_PATIENT         PAT
+  ON SC.PERSON_ID = PAT.PERSON_ID 
+JOIN MCHS_DB.MCHS_PROD.SA_ANESTHESIA_RECORD   SAR
+  ON SC.SURG_CASE_ID = SAR.SURGICAL_CASE_ID
+JOIN (SELECT A.SA_ANESTHESIA_RECORD_ID
+            ,MAX(CASE 
+                   WHEN A.CASE_ATTRIBUTE_TYPE_CD = 4056666 THEN V.DISPLAY 
+                   ELSE NULL
+                 END) AS ASA_CLASS
+            ,SUM(CASE 
+                   WHEN A.CASE_ATTRIBUTE_TYPE_CD = 4056670 THEN 1
+                   ELSE 0
+                 END) AS NBR_PROCS
+      FROM MCHS_DB.MCHS_PROD.SA_CASE_ATTRIBUTE A
+      LEFT JOIN MCHS_DB.MCHS_PROD.CODE_VALUE   V
+        ON V.CODE_VALUE = TRY_TO_NUMBER(A.CASE_ATTRIBUTE_VALUE_TXT)
+       AND A.CASE_ATTRIBUTE_TYPE_CD = 4056666
+      WHERE A.CASE_ATTRIBUTE_TYPE_CD IN (
+                4056666, -- ASA Class
+                4056670) -- Procedure
+        AND A.ACTIVE_IND = 1
+        AND A.ACTIVE_STATUS_CD = 188
+      GROUP BY A.SA_ANESTHESIA_RECORD_ID)    SCA
+  ON SCA.SA_ANESTHESIA_RECORD_ID = SAR.SA_ANESTHESIA_RECORD_ID
+LEFT JOIN (SELECT CE.ENCNTR_ID AS ENCOUNTER_ID
+                 ,MAX(CASE WHEN CE.EVENT_CD = 4154126 THEN LTRIM(RTRIM(CE.RESULT_VAL)) ELSE NULL END) AS HEIGHT
+                 ,MAX(CASE WHEN CE.EVENT_CD = 4154120 THEN LTRIM(RTRIM(CE.RESULT_VAL)) ELSE NULL END) AS WEIGHT
+           FROM MCHS_DB.MCHS_PROD.CLINICAL_EVENT CE 
+           WHERE CE.VALID_UNTIL_DT_TM > CURRENT_TIMESTAMP()
+             AND CE.RESULT_STATUS_CD = 25 -- Auth (Verified)
+             AND CE.EVENT_CD IN (4154126, 4154120)
+           GROUP BY CE.ENCNTR_ID)             HT_WT
+  ON HT_WT.ENCOUNTER_ID = SC.ENCOUNTER_ID 
+);
+
+SELECT *
+FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR
+WHERE SURGICAL_CASE_IDENTIFIER = 'MAIN-2024-3835';

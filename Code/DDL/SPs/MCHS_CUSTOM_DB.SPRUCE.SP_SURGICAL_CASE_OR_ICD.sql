@@ -1,0 +1,67 @@
+-- MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ICD.sql
+-- RM 2025.02.10 - Creation
+--               - This table doesn't have a PK, so the UPDATE section of a MERGE will fail. Using delte/re-insert instead.
+
+USE WAREHOUSE MCHS_CUSTOM_XLARGE_WH;
+USE DATABASE MCHS_CUSTOM_DB;
+USE SCHEMA SPRUCE;
+
+--TRUNCATE TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ICD;
+
+CREATE OR REPLACE PROCEDURE MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ICD()
+RETURNS VARCHAR(16777216)
+LANGUAGE JAVASCRIPT
+EXECUTE AS OWNER
+AS 
+$$
+var sql_tmp = `CREATE TEMPORARY TABLE MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ICD AS (
+               SELECT ICD.NCHS_ONLY_PERSON_ID, ICD.NCHS_ONLY_MRN, ICD.NCHS_ONLY_ENCOUNTER_ID, ICD.NCHS_ONLY_FIN, 
+                      ICD.NCHS_ONLY_SURGICAL_CASE_ID, ICD.NCHS_ONLY_DIAGNOSIS_ID, ICD.NCHS_ONLY_DIAGNOSIS_PROVIDER_ID, 
+                      ICD.NCHS_ONLY_DIAGNOSIS_PROVIDER, ICD.OR_SURGICAL_CASE_IDENTIFIER, ICD.OR_ENCOUNTER_IDENTIFIER, 
+                      ICD.ICD10_CODE, ICD.ICD10_DESCRIPTION, ICD.DW_UPDATE_TS
+               FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ICD ICD
+               JOIN MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR                 SCOR
+                 ON SCOR.NCHS_ONLY_ENCOUNTER_ID = ICD.NCHS_ONLY_ENCOUNTER_ID
+                AND SCOR.NCHS_ONLY_SURGICAL_CASE_ID = ICD.NCHS_ONLY_SURGICAL_CASE_ID 
+               WHERE DATEDIFF(DAY, SCOR.SURGERY_START_TS::DATE, CURRENT_TIMESTAMP::DATE) <= 90);`;
+var sql_del = `DELETE FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ICD
+               WHERE NCHS_ONLY_SURGICAL_CASE_ID IN (
+               SELECT NCHS_ONLY_SURGICAL_CASE_ID
+               FROM MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ICD);`;
+var sql_ins = `INSERT INTO MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ICD
+               SELECT ICD.NCHS_ONLY_PERSON_ID, ICD.NCHS_ONLY_MRN, ICD.NCHS_ONLY_ENCOUNTER_ID, ICD.NCHS_ONLY_FIN, 
+                      ICD.NCHS_ONLY_SURGICAL_CASE_ID, ICD.NCHS_ONLY_DIAGNOSIS_ID, ICD.NCHS_ONLY_DIAGNOSIS_PROVIDER_ID, 
+                      ICD.NCHS_ONLY_DIAGNOSIS_PROVIDER, ICD.OR_SURGICAL_CASE_IDENTIFIER, ICD.OR_ENCOUNTER_IDENTIFIER, 
+                      ICD.ICD10_CODE, ICD.ICD10_DESCRIPTION, ICD.DW_UPDATE_TS, ICD.DW_UPDATE_TS
+               FROM MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ICD ICD;`;
+var sql_drp = `DROP TABLE MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ICD;`;
+
+try {
+    var stmt_tmp = snowflake.createStatement ( {sqlText:sql_tmp} );
+    stmt_tmp.execute();
+
+    var stmt_del = snowflake.createStatement ( {sqlText:sql_del} );
+    stmt_del.execute();
+
+    var stmt_ins = snowflake.createStatement ( {sqlText:sql_ins} );
+    stmt_ins.execute();
+
+    var stmt_drp = snowflake.createStatement ( {sqlText:sql_drp} );
+    stmt_drp.execute();
+ 
+    rowCount = stmt_ins.getNumRowsAffected();    
+    return "Number of records affected: " + rowCount ;
+    }
+catch(err) {
+           throw "Error Occurred: " + err.message;
+           }
+$$;
+
+
+CALL MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ICD();
+-- Successful 2025.02.10
+-- Number of records affected: 7,002
+ 
+SELECT COUNT(*) AS COUNT
+FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ICD  -- 106,103, mostly loaded manually previously 
+

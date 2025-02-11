@@ -1,0 +1,65 @@
+-- MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ICD.sql
+-- RM 2025.02.05 - Creation
+-- RM 2025.02.06 - There was an issue in MCHS_CUSTOM_DB.ODS.CDS_F_DIAGNOSIS that was not populating the Diag Providers,
+--                 so I whad to use the raw table MCHS_DB.MCHS_PROD.DIAGNOSIS DX_RAW. Once the issue was resolved in the
+--                 CDS table, I reverted back to use it.
+
+CREATE OR REPLACE VIEW MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ICD AS (
+SELECT DISTINCT
+       SCOR.NCHS_ONLY_PERSON_ID                        AS NCHS_ONLY_PERSON_ID             -- Private - NCHS USE only
+      ,SCOR.NCHS_ONLY_MRN                              AS NCHS_ONLY_MRN                   -- Private - NCHS USE only
+      ,SCOR.NCHS_ONLY_ENCOUNTER_ID                     AS NCHS_ONLY_ENCOUNTER_ID          -- Private - NCHS USE only
+      ,SCOR.NCHS_ONLY_FIN                              AS NCHS_ONLY_FIN                   -- Private - NCHS USE ONLY
+      ,SCOR.NCHS_ONLY_SURGICAL_CASE_ID                 AS NCHS_ONLY_SURGICAL_CASE_ID      -- Private - NCHS USE ONLY
+      ,DX.DIAGNOSIS_ID                                 AS NCHS_ONLY_DIAGNOSIS_ID          -- Private - NCHS USE ONLY
+--      ,DX_RAW.DIAG_PRSNL_ID                            AS NCHS_ONLY_DIAGNOSIS_PROVIDER_ID -- Private - NCHS USE ONLY
+--      ,DX_RAW.DIAG_PRSNL_NAME                          AS NCHS_ONLY_DIAGNOSIS_PROVIDER    -- Private - NCHS USE ONLY
+      ,DX.DIAG_PROVIDER_ID                             AS NCHS_ONLY_DIAGNOSIS_PROVIDER_ID -- Private - NCHS USE ONLY
+      ,DX.DIAG_PROVIDER_NAME                           AS NCHS_ONLY_DIAGNOSIS_PROVIDER    -- Private - NCHS USE ONLY
+      ,SCOR.SURGICAL_CASE_IDENTIFIER                   AS OR_SURGICAL_CASE_IDENTIFIER
+      ,SCOR.ENCOUNTER_IDENTIFIER                       AS OR_ENCOUNTER_IDENTIFIER
+      ,DX.DIAGNOSIS_CD                                 AS ICD10_CODE
+      ,DX.DIAGNOSIS_DESC                               AS ICD10_DESCRIPTION
+      ,CURRENT_TIMESTAMP                               AS DW_UPDATE_TS 
+FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR  SCOR
+JOIN MCHS_CUSTOM_DB.ODS.CDS_F_DIAGNOSIS      DX
+  ON SCOR.NCHS_ONLY_ENCOUNTER_ID = DX.ENCOUNTER_ID
+-- RM 2025.02.06 - There was an issue in MCHS_CUSTOM_DB.ODS.CDS_F_DIAGNOSIS that was not populating the Diag Providers,
+--                 so I whad to use the raw table MCHS_DB.MCHS_PROD.DIAGNOSIS DX_RAW. Once the issue was resolved in the
+--                 CDS table, I reverted back to use it.
+--LEFT JOIN MCHS_DB.MCHS_PROD.DIAGNOSIS DX_RAW
+--  ON DX_RAW.DIAGNOSIS_ID = DX.DIAGNOSIS_ID
+-- AND DX_RAW.ACTIVE_IND = 1 
+WHERE DX.SOURCE_VOCABULARY_DESC = 'ICD-10-CM'      
+  AND DX.CONTRIBUTOR_SYSTEM_DESC <> '3M CODING AND REIMBURSEMENT'
+--  AND DX_RAW.DIAG_PRSNL_ID IS NOT NULL
+  AND DX.DIAG_PROVIDER_ID IS NOT NULL 
+  AND DX.DIAG_PROVIDER_ID > 0
+);
+
+-- Validation:
+--SELECT *
+--FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ICD
+--WHERE OR_SURGICAL_CASE_IDENTIFIER = 'MAIN-2024-3835';
+
+--
+-- RM 2025.02.05 - MCHS_CUSTOM_DB.ODS.CDS_F_DIAGNOSIS DX is missing the providers 
+-- sent a text to Raydel for review:
+--
+--SELECT DX.DIAGNOSIS_ID
+--      ,DX.DIAGNOSIS_DESC
+--      ,DX.DIAGNOSIS_PROVIDER
+--FROM MCHS_CUSTOM_DB.ODS.CDS_F_DIAGNOSIS DX
+--WHERE DX.DIAGNOSIS_ID IN (7926004509,7923062353,7925986289,7925603761);
+--
+--SELECT DX_RAW.DIAGNOSIS_ID
+--      ,DX_RAW.DIAG_PRSNL_ID
+--      ,DX_RAW.DIAGNOSIS_DISPLAY
+--      ,DX_RAW.DIAG_PRSNL_NAME
+--FROM MCHS_DB.MCHS_PROD.DIAGNOSIS DX_RAW
+--WHERE DX_RAW.DIAGNOSIS_ID IN (7926004509,7923062353,7925986289,7925603761);
+--
+--SELECT * 
+--FROM MCHS_CUSTOM_DB.ODS.CDS_D_HEALTHCARE_PROFESSIONAL
+--WHERE PERSON_ID IN (750013,8047630);
+

@@ -1,0 +1,75 @@
+-- Sample queries for extracts.sql
+-- RM 2025.01.28 - Creation
+-- RM 2025.01.29 - Formatted timestamps
+
+
+-- OR
+SELECT SURGICAL_CASE_IDENTIFIER                             AS SURGICAL_CASE_IDENTIFIER
+      ,ENCOUNTER_IDENTIFIER                                 AS ENCOUNTER_IDENTIFIER 
+      ,MEDICAL_RECORD_NUMBER                                AS MEDICAL_RECORD_NUMBER 
+      ,LEGAL_SEX                                            AS LEGAL_SEX 
+      ,RACE                                                 AS RACE 
+      ,ETHNICITY                                            AS ETHNICITY 
+      ,LANGUAGE                                             AS LANGUAGE 
+      ,ZIP_CODE                                             AS ZIP_CODE 
+      ,HEIGHT_CM                                            AS HEIGHT_CM 
+      ,WEIGHT_KG                                            AS WEIGHT_KG 
+      ,FACILITY_NAME                                        AS FACILITY_NAME 
+      ,PATIENT_AGE_IN_YEARS                                 AS PATIENT_AGE_IN_YEARS 
+      ,PATIENT_AGE_IN_MONTHS                                AS PATIENT_AGE_IN_MONTHS 
+      ,PRIMARY_PAYOR_NAME                                   AS PRIMARY_PAYOR_NAME 
+      ,PRIMARY_PAYOR_FINANCIAL_CLASS                        AS PRIMARY_PAYOR_FINANCIAL_CLASS 
+      ,PATIENT_CLASS                                        AS PATIENT_CLASS 
+      ,OR_ROOM_NAME                                         AS OR_ROOM_NAME 
+      ,PRIMARY_PROCEDURE_NAME                               AS PRIMARY_PROCEDURE_NAME 
+      ,PROCEDURE_COUNT                                      AS PROCEDURE_COUNT 
+      ,CASE_ELECTIVE                                        AS CASE_ELECTIVE 
+      ,SUBSTRING(SCHEDULED_START_TS::STRING,1,19)           AS SCHEDULED_START_TS 
+      ,PRIMARY_SURGEON_NAME                                 AS PRIMARY_SURGEON_NAME
+      ,SURGICAL_SPECIALTY                                   AS SURGICAL_SPECIALTY
+      ,SUBSTRING(WHEELED_INTO_OR_TS::STRING,1,19)           AS WHEELED_INTO_OR_TS 
+      ,SUBSTRING(SURGERY_START_TS::STRING,1,19)             AS SURGERY_START_TS
+      ,SUBSTRING(SURGICAL_CLOSE_TS::STRING,1,19)            AS SURGICAL_CLOSE_TS
+      ,SUBSTRING(WHEELED_OUT_OF_OR_TS::STRING,1,19)         AS WHEELED_OUT_OF_OR_TS
+      ,SUBSTRING(HOSPITAL_ADMIT_INPATIENT_TS::STRING,1,19)  AS HOSPITAL_ADMIT_INPATIENT_TS
+      ,SUBSTRING(HOSPITAL_DISCHARGE_TS::STRING,1,19)        AS HOSPITAL_DISCHARGE_TS
+      ,ASA_SCORE                                            AS ASA_SCORE
+      ,AIRWAY_GRADE                                         AS AIRWAY_GRADE
+      ,SUBSTRING(ANESTHESIA_START_TS::STRING,1,19)          AS ANESTHESIA_START_TS
+      ,SUBSTRING(ANESTHESIA_READY_TS::STRING,1,19)          AS ANESTHESIA_READY_TS
+      ,SUBSTRING(ANESTHESIA_STOP_TS::STRING,1,19)           AS ANESTHESIA_STOP_TS
+      ,SUBSTRING(PACU_1_ADMIT_TS::STRING,1,19)              AS PACU_1_ADMIT_TS
+      ,SUBSTRING(PACU_1_DISCHARGE_TS::STRING,1,19)          AS PACU_1_DISCHARGE_TS
+      ,SUBSTRING(PACU_2_ADMIT_TS::STRING,1,19)              AS PACU_2_ADMIT_TS
+      ,SUBSTRING(PACU_2_DISCHARGE_TS::STRING,1,19)          AS PACU_2_DISCHARGE_TS
+FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR
+
+-- OR_ENVIRONMENT
+SELECT OR_SURGICAL_CASE_IDENTIFIER              AS OR_SURGICAL_CASE_IDENTIFIER
+      ,OR_ENCOUNTER_IDENTIFIER                  AS OR_ENCOUNTER_IDENTIFIER
+      ,SUBSTRING(GAS_TS::STRING,1,19)           AS GAS_TS 
+      ,GAS_DURATION_MINUTES                     AS GAS_DURATION_MINUTES
+      ,AIR_VOLUME                               AS AIR_VOLUME
+      ,O2_VOLUME                                AS O2_VOLUME
+      ,N2O_VOLUME                               AS N2O_VOLUME
+      ,EXPIRED_DES_PERCENT                      AS EXPIRED_DES_PERCENT
+      ,EXPIRED_ISO_PERCENT                      AS EXPIRED_ISO_PERCENT
+      ,EXPIRED_SEVO_PERCENT                     AS EXPIRED_SEVO_PERCENT 
+      ,INSPIRED_SEVOFLURANE                     AS "*** NOT IN SPECS: INSPIRED_SEVOFLURANE *** " 
+FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ENV
+WHERE OR_SURGICAL_CASE_IDENTIFIER = 'MAIN-2024-3835';
+
+
+-- STAFF
+SELECT OR_SURGICAL_CASE_IDENTIFIER
+      ,OR_ENCOUNTER_IDENTIFIER
+      ,STAFF_NAME
+      ,STAFF_ROLE
+FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_STAFF
+WHERE OR_SURGICAL_CASE_IDENTIFIER = 'MAIN-2024-3835';
+
+SELECT DISTINCT 
+       NCHS_ONLY_STAFF_ROLE_PERFORMED
+FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_STAFF
+WHERE STAFF_ROLE IS NULL
+ORDER BY NCHS_ONLY_STAFF_ROLE_PERFORMED;

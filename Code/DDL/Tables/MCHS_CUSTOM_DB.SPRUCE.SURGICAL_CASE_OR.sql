@@ -1,0 +1,53 @@
+-- MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR.sql
+-- RM 2025.01.20 - Creation
+--               - Based on the new version received from AdaptX on 2025.01.15
+-- RM 2025.01.28 - Added NCHS-only fields 
+
+--DROP TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR;
+CREATE TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR (  
+   NCHS_ONLY_PERSON_ID                      NUMBER(38,0)      COMMENT 'PERSON_ID - Private - NCHS USE only',
+   NCHS_ONLY_MRN                            NUMBER(38,0)      COMMENT 'MEDICAL_RECORD_NUMBER - Private - NCHS USE only',
+   NCHS_ONLY_ENCOUNTER_ID                   NUMBER(38,0)      COMMENT 'ENCOUNTER_ID - Private - NCHS USE only',
+   NCHS_ONLY_FIN                            VARCHAR(400)      COMMENT 'FINANCIAL_NUMBER - Private - NCHS USE only',
+   NCHS_ONLY_SURGICAL_CASE_ID               NUMBER(38,0)      COMMENT 'SURG_CASE_ID - Private - NCHS USE only',
+   SURGICAL_CASE_IDENTIFIER                 VARCHAR(400)      COMMENT 'Unique surgical case identifier.',
+   ENCOUNTER_IDENTIFIER                     VARCHAR(400)      COMMENT 'Unique encounter identifier for the surgical case.',
+   MEDICAL_RECORD_NUMBER                    VARCHAR(400)      COMMENT 'Unique patient medical record identifier.',
+   LEGAL_SEX                                VARCHAR(400)      COMMENT 'Patient''s legal sex.',
+   RACE                                     VARCHAR(400)      COMMENT 'Patient''s race. If the patient has more than one race, use the word "Multiple".',
+   ETHNICITY                                VARCHAR(400)      COMMENT 'Patient''s ethnicity. If the patient has more than one ethnicity, use the word "Multiple".',
+   LANGUAGE                                 VARCHAR(400)      COMMENT 'Patient''s primary spoken language.',
+   ZIP_CODE                                 VARCHAR(400)      COMMENT 'Patient''s home address ZIP or postal code.',
+   HEIGHT_CM                                NUMBER(38,3)      COMMENT 'Patient''s height in cm.',
+   WEIGHT_KG                                NUMBER(38,3)      COMMENT 'Patient''s weight in kg.',
+   FACILITY_NAME                            VARCHAR(400)      COMMENT 'Site of the service.',
+   PATIENT_AGE_IN_YEARS                     NUMBER(38,0)      COMMENT 'Patient''s age in years at the start of the encounter.',
+   PATIENT_AGE_IN_MONTHS                    NUMBER(38,0)      COMMENT 'Patient''s age in months at the start of the encounter.',
+   PRIMARY_PAYOR_NAME                       VARCHAR(400)      COMMENT 'Name of the primary payor for the encounter.',
+   PRIMARY_PAYOR_FINANCIAL_CLASS            VARCHAR(400)      COMMENT 'The financial class of the primary payor for the encounter. For example, "Commercial", "Medicare", "Self-Insured".',
+   PATIENT_CLASS                            VARCHAR(400)      COMMENT 'The patient classification for the encounter. For example, "Inpatient", "Outpatient", "Observation"',
+   OR_ROOM_NAME                             VARCHAR(400)      COMMENT 'Name of the room where the surgery was performed.',
+   PRIMARY_PROCEDURE_NAME                   VARCHAR(400)      COMMENT 'Name of the primary procedure that was performed.',
+   PROCEDURE_COUNT                          NUMBER(38,0)      COMMENT 'The number of procedures that were scheduled to be performed during the same case.',
+   CASE_ELECTIVE                            VARCHAR(400)      COMMENT 'Indicates the case was elective.',
+   SCHEDULED_START_TS                       TIMESTAMP_LTZ(9)  COMMENT 'Date and time the case was scheduled to start. (Use YYYY-MM-DD HH:MM:SS format.)',
+   PRIMARY_SURGEON_NAME                     VARCHAR(400)      COMMENT 'Name of the primary surgeon on the case.',
+   SURGICAL_SPECIALTY                       VARCHAR(400)      COMMENT 'The surgical specialty handling the case.',
+   WHEELED_INTO_OR_TS                       TIMESTAMP_LTZ(9)  COMMENT 'Date and time the patient was wheeled into the OR. (Use YYYY-MM-DD HH:MM:SS format.)',
+   SURGERY_START_TS                         TIMESTAMP_LTZ(9)  COMMENT 'Date and time the surgery started; date and time of the incision. (Use YYYY-MM-DD HH:MM:SS format.)',
+   SURGICAL_CLOSE_TS                        TIMESTAMP_LTZ(9)  COMMENT 'Date and time of surgical close, date and time of the last stitch or dressing on. (Use YYYY-MM-DD HH:MM:SS format.)',
+   WHEELED_OUT_OF_OR_TS                     TIMESTAMP_LTZ(9)  COMMENT 'Date and time the patient was wheeled out of the OR. (Use YYYY-MM-DD HH:MM:SS format.)',
+   HOSPITAL_ADMIT_INPATIENT_TS              TIMESTAMP_LTZ(9)  COMMENT 'If the patient was admitted as an inpatient during the encounter, date and time the patient first had an inpatient admitted hospital status. (Use YYYY-MM-DD HH:MM:SS format.)',
+   HOSPITAL_DISCHARGE_TS                    TIMESTAMP_LTZ(9)  COMMENT 'If the patient was admitted as an inpatient during the encounter, date and time the patient was discharged from the hospital. (Use YYYY-MM-DD HH:MM:SS format.)',
+   ASA_SCORE                                VARCHAR(400)      COMMENT 'American Society of Anesthesiologists classification.',
+   AIRWAY_GRADE                             VARCHAR(400)      COMMENT 'Airway grade via device used to secure airway.',
+   ANESTHESIA_START_TS                      TIMESTAMP_LTZ(9)  COMMENT 'Date and time the anesthesia started. (Use YYYY-MM-DD HH:MM:SS format.)',
+   ANESTHESIA_READY_TS                      TIMESTAMP_LTZ(9)  COMMENT 'Date and time the anesthetized patient was ready for surgery prep. (Use YYYY-MM-DD HH:MM:SS format.)',
+   ANESTHESIA_STOP_TS                       TIMESTAMP_LTZ(9)  COMMENT 'Date and time the anesthesia stopped. (Use YYYY-MM-DD HH:MM:SS format.)',
+   PACU_1_ADMIT_TS                          TIMESTAMP_LTZ(9)  COMMENT 'Date and time the patient was admitted to the PACU 1. Use this if you use only one PACU. (Use YYYY-MM-DD HH:MM:SS format.)',
+   PACU_1_DISCHARGE_TS                      TIMESTAMP_LTZ(9)  COMMENT 'Date and time the patient was discharged from the PACU 1. Use this if you use only one PACU. (Use YYYY-MM-DD HH:MM:SS format.)',
+   PACU_2_ADMIT_TS                          TIMESTAMP_LTZ(9)  COMMENT 'Date and time the patient was admitted to the PACU 2. Leave this NULL if you use only one PACU. (Use YYYY-MM-DD HH:MM:SS format.)',
+   PACU_2_DISCHARGE_TS                      TIMESTAMP_LTZ(9)  COMMENT 'Date and time the patient was discharged from the PACU 2. Leave this NULL if you use only one PACU. (Use YYYY-MM-DD HH:MM:SS format.)',
+   DW_CREATE_TS                             TIMESTAMP_LTZ(9)  COMMENT 'NCHS DW standard creation timestamp',
+   DW_UPDATE_TS                             TIMESTAMP_LTZ(9)  COMMENT 'NCHS DW standard update timestamp'
+   );      

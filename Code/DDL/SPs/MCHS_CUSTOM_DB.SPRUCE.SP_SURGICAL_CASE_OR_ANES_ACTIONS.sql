@@ -1,0 +1,65 @@
+-- MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ANES_ACTIONS.sql
+-- RM 2025.02.10 - Creation
+--               - This table doesn't have a PK, so the UPDATE section of a MERGE will fail. Using delte/re-insert instead.
+
+USE WAREHOUSE MCHS_CUSTOM_XLARGE_WH;
+USE DATABASE MCHS_CUSTOM_DB;
+USE SCHEMA SPRUCE;
+
+--TRUNCATE TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ANES_ACTIONS;
+
+CREATE OR REPLACE PROCEDURE MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ANES_ACTIONS()
+RETURNS VARCHAR(16777216)
+LANGUAGE JAVASCRIPT
+EXECUTE AS OWNER
+AS 
+$$
+var sql_tmp = `CREATE TEMPORARY TABLE MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ANES_ACTIONS AS (
+               SELECT AA.NCHS_ONLY_PERSON_ID, AA.NCHS_ONLY_MRN, AA.NCHS_ONLY_ENCOUNTER_ID, AA.NCHS_ONLY_FIN, AA.NCHS_ONLY_SURGICAL_CASE_ID,
+                      AA.NCHS_ONLY_ACTION_DT_TM, AA.NCHS_ONLY_SA_ACTION_ID, AA.NCHS_ONLY_EVENT_ID, AA.OR_SURGICAL_CASE_IDENTIFIER,
+                      AA.OR_ENCOUNTER_IDENTIFIER, AA.ANESTHESIA_ACTION, AA.DW_UPDATE_TS
+               FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ANES_ACTIONS AA
+               JOIN MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR                 SCOR
+                 ON SCOR.NCHS_ONLY_ENCOUNTER_ID = AA.NCHS_ONLY_ENCOUNTER_ID
+                AND SCOR.NCHS_ONLY_SURGICAL_CASE_ID = AA.NCHS_ONLY_SURGICAL_CASE_ID 
+               WHERE DATEDIFF(DAY, SCOR.SURGERY_START_TS::DATE, CURRENT_TIMESTAMP::DATE) <= 90);`;
+var sql_del = `DELETE FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ANES_ACTIONS
+               WHERE NCHS_ONLY_SURGICAL_CASE_ID IN (
+               SELECT NCHS_ONLY_SURGICAL_CASE_ID
+               FROM MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ANES_ACTIONS);`;
+var sql_ins = `INSERT INTO MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ANES_ACTIONS
+               SELECT AA.NCHS_ONLY_PERSON_ID, AA.NCHS_ONLY_MRN, AA.NCHS_ONLY_ENCOUNTER_ID, AA.NCHS_ONLY_FIN, AA.NCHS_ONLY_SURGICAL_CASE_ID,
+                      AA.NCHS_ONLY_ACTION_DT_TM, AA.NCHS_ONLY_SA_ACTION_ID, AA.NCHS_ONLY_EVENT_ID, AA.OR_SURGICAL_CASE_IDENTIFIER,
+                      AA.OR_ENCOUNTER_IDENTIFIER, AA.ANESTHESIA_ACTION, AA.DW_UPDATE_TS, AA.DW_UPDATE_TS
+               FROM MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ANES_ACTIONS AA;`;
+var sql_drp = `DROP TABLE MCHS_CUSTOM_DB.SPRUCE.TEMP_SURGICAL_CASE_OR_ANES_ACTIONS;`;
+
+try {
+    var stmt_tmp = snowflake.createStatement ( {sqlText:sql_tmp} );
+    stmt_tmp.execute();
+
+    var stmt_del = snowflake.createStatement ( {sqlText:sql_del} );
+    stmt_del.execute();
+
+    var stmt_ins = snowflake.createStatement ( {sqlText:sql_ins} );
+    stmt_ins.execute();
+
+    var stmt_drp = snowflake.createStatement ( {sqlText:sql_drp} );
+    stmt_drp.execute();
+ 
+    rowCount = stmt_ins.getNumRowsAffected();    
+    return "Number of records affected: " + rowCount ;
+    }
+catch(err) {
+           throw "Error Occurred: " + err.message;
+           }
+$$;
+
+
+CALL MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ANES_ACTIONS();
+-- Successful 2025.02.10
+-- Number of records affected: 201,900
+ 
+SELECT COUNT(*) AS COUNT
+FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ANES_ACTIONS  -- 2,749,696, mostly loaded manually previously 
+

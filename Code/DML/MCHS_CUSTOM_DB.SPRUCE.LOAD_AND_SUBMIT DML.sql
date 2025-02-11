@@ -1,0 +1,92 @@
+-- MCHS_CUSTOM_DB.SPRUCE.LOAD_AND_SUBMIT DML.sql
+-- RM 2025.02.10 - Creation
+
+
+USE DATABASE MCHS_CUSTOM_DB;
+USE SCHEMA SPRUCE;
+
+TRUNCATE TABLE MCHS_CUSTOM_DB.SPRUCE.LOAD_AND_SUBMIT;
+INSERT INTO MCHS_CUSTOM_DB.SPRUCE.LOAD_AND_SUBMIT
+  (SEQ, SP_NAME, FILE_NAME, EXPORT_FLAG, EXPORT_SQL)
+SELECT COLUMN1::INTEGER        AS SEQ, 
+       COLUMN2::TEXT(400)      AS SP_NAME, 
+       COLUMN3::TEXT(400)      AS FILE_NAME, 
+       COLUMN4::TEXT(1)        AS EXPORT_FLAG, 
+       COLUMN5::TEXT(16777216) AS EXPORT_SQL
+FROM VALUES 
+('1', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR', 'or', 'Y', 
+'SELECT VEOR.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VEOR."surgical_case_identifier";'),
+('2', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ENV', 'or_environment', 'Y',
+'SELECT VEOE.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR_ENVIRONMENT VEOE
+ JOIN MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+   ON VEOE."or_surgical_case_identifier" = VEOR."surgical_case_identifier"
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VEOE."or_surgical_case_identifier", "gas_ts";'),
+('3', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_STAFF', 'staff', 'Y',
+'SELECT VES.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_STAFF VES
+ JOIN MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+   ON VES."or_surgical_case_identifier" = VEOR."surgical_case_identifier"
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VES."or_surgical_case_identifier", VES."staff_name";'),
+('4', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ANES_ACTIONS', 'anes_actions', 'Y',
+'SELECT VEAA.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_ANES_ACTIONS VEAA
+ JOIN MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+   ON VEAA."or_surgical_case_identifier" = VEOR."surgical_case_identifier"
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VEAA."or_surgical_case_identifier", VEAA."anesthesia_action";'),
+('5', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ANES_PROCEDURES', 'procedure', 'Y',
+'SELECT VP.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_PROCEDURE VP
+ JOIN MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+   ON VP."or_surgical_case_identifier" = VEOR."surgical_case_identifier"
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VP."or_surgical_case_identifier";'),
+('6', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ADMIN_MEDS', 'administered_medications', 'Y',
+'SELECT VM.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_ADMIN_MEDS VM
+ JOIN MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+   ON VM."or_surgical_case_identifier" = VEOR."surgical_case_identifier"
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VM."or_surgical_case_identifier" 
+          ,VM."medication_administration_ts";'),
+('7', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ICD', 'icd', 'Y',
+'SELECT VI.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_ICD VI
+ JOIN MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+   ON VI."or_surgical_case_identifier" = VEOR."surgical_case_identifier"
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VI."or_surgical_case_identifier";'),
+ ('8', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_PAIN', 'pain', 'Y',
+'SELECT VP.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_PAIN VP
+ JOIN MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_OR VEOR
+   ON VP."or_surgical_case_identifier" = VEOR."surgical_case_identifier"
+ WHERE DATEDIFF(DAY, VEOR."scheduled_start_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VP."or_surgical_case_identifier", "pain_score_ts";'),
+('9', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_ED_ARRIVALS', 'ed_arrivals', 'Y',
+'SELECT VEA.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_ED_ARRIVALS VEA
+ WHERE DATEDIFF(DAY, VEA."ed_arrival_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VEA."ed_arrival_ts";'),
+('10', 'MCHS_CUSTOM_DB.SPRUCE.SP_SURGICAL_CASE_OR_HOSPITAL_ADMITS', 'hospital_admits', 'Y',
+'SELECT VHA.*
+ FROM MCHS_CUSTOM_DB.SPRUCE.VW_EXTRACT_HOSPITAL_ADMITS VHA
+ WHERE DATEDIFF(DAY, VHA."hospital_admit_inpatient_ts"::DATE, CURRENT_TIMESTAMP::DATE) <= 90
+ ORDER BY VHA."hospital_admit_inpatient_ts";') 
+ ;
+
+-- Successfull 2025.02.10
+-- Updated Rows    10
+-- Execute time    00:00:01
+-- Start time  Mon Feb 10 15:07:11 EST 2025
+-- Finish time Mon Feb 10 15:07:11 EST 2025
+
+SELECT *
+FROM MCHS_CUSTOM_DB.SPRUCE.LOAD_AND_SUBMIT;
+

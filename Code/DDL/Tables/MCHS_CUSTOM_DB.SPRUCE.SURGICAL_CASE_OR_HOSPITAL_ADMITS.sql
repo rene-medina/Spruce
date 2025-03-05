@@ -2,14 +2,19 @@
 -- RM 2025.01.20 - Creation
 --               - Based on the new version received from AdaptX on 2025.01.15
 -- RM 2025.02.06 - Added several NCHS_ONLY columns for internal use only         
+-- RM 2025.02.21 - Added new columns to address the 30-days cap
 
 
-DROP TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_HOSPITAL_ADMITS;
+--DROP TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_HOSPITAL_ADMITS;
 CREATE TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_HOSPITAL_ADMITS (      
    NCHS_ONLY_PERSON_ID                      NUMBER(38,0)      COMMENT 'PERSON_ID - Private - NCHS USE only',
    NCHS_ONLY_MRN                            NUMBER(38,0)      COMMENT 'MEDICAL_RECORD_NUMBER - Private - NCHS USE only',
    NCHS_ONLY_ENCOUNTER_ID                   NUMBER(38,0)      COMMENT 'ENCOUNTER_ID - Private - NCHS USE only',
+   NCHS_ONLY_ENCOUNTER_TYPE                 VARCHAR(400)      COMMENT 'ENCOUNTER_TYPE_DESC - Private - NCHS USE only',
    NCHS_ONLY_FIN                            VARCHAR(400)      COMMENT 'FINANCIAL_NUMBER - Private - NCHS USE only',
+   NCHS_ONLY_ENCOUNTER_TS                   TIMESTAMP_LTZ(9)  COMMENT 'COALESCE(ACTUAL_ARRIVAL_DT_TM, REGISTRATION_DT_TM, INPATIENT_ADMIT_DT_TM) - Private - NCHS USE only',
+   NCHS_ONLY_SURGERY_START_TS               TIMESTAMP_LTZ(9)  COMMENT 'SURGERY_START_TS - Private - NCHS USE only',
+   NCHS_ONLY_DAYS_SINCE_SURGERY             NUMBER(38,0)      COMMENT 'DATEDIFF(NCHS_ONLY_SURGERY_START_TS, NCHS_ONLY_ENCOUNTER_TS) - Private - NCHS USE only',
    NCHS_ONLY_SURGICAL_CASE_ID               NUMBER(38,0)      COMMENT 'SURG_CASE_ID - Private - NCHS USE only',
    OR_SURGICAL_CASE_IDENTIFIER              VARCHAR(400)      COMMENT 'Unique surgical case identifier.',
    OR_ENCOUNTER_IDENTIFIER                  VARCHAR(400)      COMMENT 'Unique encounter identifier for the surgical case.',

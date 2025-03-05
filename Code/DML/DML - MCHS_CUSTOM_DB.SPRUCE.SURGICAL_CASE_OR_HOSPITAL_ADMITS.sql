@@ -1,13 +1,19 @@
 -- DML - MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_HOSPITAL_ADMITS.sql
 -- Initial population of MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_HOSPITAL_ADMITS
 -- RM 2025.02.07 - Creation
+-- RM 2025.02.25 - Recreated with additional columns to track the 30-days after surgery cap.
+
 
 --TRUNCATE TABLE MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_HOSPITAL_ADMITS;
 INSERT INTO MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_HOSPITAL_ADMITS
 SELECT NCHS_ONLY_PERSON_ID            -- Private - NCHS USE only
       ,NCHS_ONLY_MRN                  -- Private - NCHS USE only
       ,NCHS_ONLY_ENCOUNTER_ID         -- Private - NCHS USE only
+      ,NCHS_ONLY_ENCOUNTER_TYPE       -- Private - NCHS USE ONLY
       ,NCHS_ONLY_FIN                  -- Private - NCHS USE ONLY
+      ,NCHS_ONLY_ENCOUNTER_TS         -- Private - NCHS USE ONLY
+      ,NCHS_ONLY_SURGERY_START_TS     -- Private - NCHS USE ONLY       
+      ,NCHS_ONLY_DAYS_SINCE_SURGERY   -- Private - NCHS USE ONLY
       ,NCHS_ONLY_SURGICAL_CASE_ID     -- Private - NCHS USE ONLY
       ,OR_SURGICAL_CASE_IDENTIFIER
       ,OR_ENCOUNTER_IDENTIFIER        -- De-Identified/Tokenized
@@ -18,8 +24,9 @@ SELECT NCHS_ONLY_PERSON_ID            -- Private - NCHS USE only
 FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_HOSPITAL_ADMITS
 ORDER BY HOSPITAL_ADMIT_INPATIENT_TS;
 
--- Successful 2025.02.07
--- Updated Rows    19,041
--- Execute time    00:00:01
--- Start time  Fri Feb 07 11:12:15 EST 2025
--- Finish time Fri Feb 07 11:12:17 EST 2025
+
+-- Successful 2025.02.25
+-- Updated Rows    10,429
+-- Execute time    00:00:02
+-- Start time  Tue Feb 25 11:13:39 EST 2025
+-- Finish time Tue Feb 25 11:13:41 EST 2025

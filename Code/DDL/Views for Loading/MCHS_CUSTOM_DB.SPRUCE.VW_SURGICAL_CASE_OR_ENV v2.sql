@@ -49,8 +49,8 @@ SELECT SCOR.NCHS_ONLY_PERSON_ID                        AS NCHS_ONLY_PERSON_ID   
            END)                                        AS EXPIRED_SEVO_PERCENT
       ,MAX(CASE
              WHEN SRP.TASK_ASSAY_CD = 19818299    -- Inspired Sevoflurane Anes -- RM 2025.01.27 *** NOT IN SPECS, SUGGESTED TO BE ADDED *** 
-             THEN CE.RESULT_VAL ELSE NULL
-           END)                                        AS INSPIRED_SEVOFLURANE
+             THEN CE.RESULT_VAL ELSE NULL                                      
+           END)                                        AS INSPIRED_SEVOFLURANE -- RM 2025.02.11 - AdaptX approved the addition OF this column
       ,CURRENT_TIMESTAMP                               AS DW_UPDATE_TS     
 FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR            SCOR
 -- RM 2025.01.28 - Can't use CDS_F_SURGERY_CASE for staff, as ADAPTX is asking for additional and/or more 

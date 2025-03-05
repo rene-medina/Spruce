@@ -20,7 +20,7 @@ SELECT NCHS_ONLY_PERSON_ID
       ,DW_UPDATE_TS
 FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_STAFF;
 
--- Successfull     2025.02.10
+-- Successful     2025.02.10
 -- Updated Rows    277,873
 -- Execute time    00:00:03
 -- Start time  Mon Feb 10 13:41:37 EST 2025
@@ -35,3 +35,9 @@ SELECT DISTINCT
 FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_STAFF
 WHERE STAFF_ROLE = '<UNKNOWN>'
 ORDER BY NCHS_ONLY_STAFF_ROLE_PERFORMED;
+
+-- Successful      2025.02.26
+-- Updated Rows    277,467
+-- Execute time    00:00:02
+-- Start time  Wed Feb 26 10:45:28 EST 2025
+-- Finish time Wed Feb 26 10:45:30 EST 2025

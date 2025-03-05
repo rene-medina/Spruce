@@ -15,7 +15,7 @@ SELECT OR_SURGICAL_CASE_IDENTIFIER              AS "or_surgical_case_identifier"
       ,EXPIRED_DES_PERCENT                      AS "expired_des_percent"
       ,EXPIRED_ISO_PERCENT                      AS "expired_iso_percent"
       ,EXPIRED_SEVO_PERCENT                     AS "expired_sevo_percent" 
-      ,INSPIRED_SEVOFLURANE                     AS "*** NOT IN SPECS: INSPIRED_SEVOFLURANE *** " 
+      ,INSPIRED_SEVOFLURANE                     AS "inspired_sevo_percent" -- Originally not in the specs, approved on 2025.02.11 
 FROM MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR_ENV
 );
 

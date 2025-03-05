@@ -1,0 +1,95 @@
+-- MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ED_ARRIVALS v3.sql
+-- RM 2025.02.06 - Creation
+--               - As per AdaptX specs: Include all Emergency Department arrivals for each patient represented in the surgical cases. 
+--                 Include the ED arrival for the surgery itself if the surgical encounter began in the ED, and include all other 
+--                 ED arrivals those patients have had.
+-- RM 2025.02.07 - There are a few hundred emergencies w/o ACTUAL_ARRIVAL_DT_TM, so I'm complementing with REGISTRATION_DT_TM.
+-- RM 2025.02.17 - The following is an intentional Cartessian Product, as ADAPTX asked to repeat the same SURGICAL_CASE_IDENTIFIER on all of the patient's encounters.
+-- RM 2025.02.21 - Recreated with additional columns to track the 30-days after surgery cap.
+
+--DROP VIEW MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ED_ARRIVALS;
+CREATE OR REPLACE VIEW MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ED_ARRIVALS AS (
+SELECT E.PERSON_ID                           AS NCHS_ONLY_PERSON_ID          -- Private - NCHS USE only
+      ,E.ENCOUNTER_MRN                       AS NCHS_ONLY_MRN                -- Private - NCHS USE only
+      ,E.ENCOUNTER_ID                        AS NCHS_ONLY_ENCOUNTER_ID       -- Private - NCHS USE only
+      ,E.ENCOUNTER_TYPE_DESC                 AS NCHS_ONLY_ENCOUNTER_TYPE     -- Private - NCHS USE ONLY
+      ,E.FINANCIAL_NUMBER                    AS NCHS_ONLY_FIN                -- Private - NCHS USE ONLY
+      ,COALESCE(E.ACTUAL_ARRIVAL_DT_TM, 
+                E.REGISTRATION_DT_TM, 
+                E.INPATIENT_ADMIT_DT_TM)     AS NCHS_ONLY_ENCOUNTER_TS       -- Private - NCHS USE ONLY
+      ,O.SURGERY_START_TS                    AS NCHS_ONLY_SURGERY_START_TS   -- Private - NCHS USE ONLY       
+      ,DATEDIFF(DAY, 
+         NCHS_ONLY_SURGERY_START_TS, 
+         NCHS_ONLY_ENCOUNTER_TS)             AS NCHS_ONLY_DAYS_SINCE_SURGERY -- Private - NCHS USE ONLY
+      ,O.NCHS_ONLY_SURGICAL_CASE_ID          AS NCHS_ONLY_SURGICAL_CASE_ID   -- Private - NCHS USE ONLY
+      ,O.SURGICAL_CASE_IDENTIFIER            AS OR_SURGICAL_CASE_IDENTIFIER
+      ,E_TOKEN.ENC_REIDENT                   AS OR_ENCOUNTER_IDENTIFIER        -- De-Identified/Tokenized
+      ,E_TOKEN.ENC_REIDENT                   AS ED_ENCOUNTER_IDENTIFIER  -- De-Identified/Tokenized
+      ,E.ACTUAL_ARRIVAL_DT_TM                AS ED_ARRIVAL_TS
+      ,CURRENT_TIMESTAMP                     AS DW_UPDATE_TS
+FROM MCHS_CUSTOM_DB.ODS.CDS_F_ENCOUNTER E
+JOIN MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR O 
+  ON O.NCHS_ONLY_PERSON_ID = E.PERSON_ID
+LEFT JOIN MCHS_CUSTOM_DB.STG_OTHER.REIDENT_ENCOUNTER E_TOKEN
+  ON E_TOKEN.ENCNTR_ID = E.ENCOUNTER_ID
+LEFT JOIN MCHS_CUSTOM_DB.RESEARCH.PERSON_HASH_MRN    MRN_TOKEN
+  ON MRN_TOKEN.PERSON_ID = E.PERSON_ID
+WHERE E.ENCOUNTER_TYPE_DESC IN ('Emergency')
+  AND NCHS_ONLY_DAYS_SINCE_SURGERY BETWEEN 0 AND 30
+UNION
+SELECT E.PERSON_ID                           AS NCHS_ONLY_PERSON_ID          -- Private - NCHS USE only
+      ,E.ENCOUNTER_MRN                       AS NCHS_ONLY_MRN                -- Private - NCHS USE only
+      ,E.ENCOUNTER_ID                        AS NCHS_ONLY_ENCOUNTER_ID       -- Private - NCHS USE only
+      ,E.ENCOUNTER_TYPE_DESC                 AS NCHS_ONLY_ENCOUNTER_TYPE     -- Private - NCHS USE ONLY
+      ,E.FINANCIAL_NUMBER                    AS NCHS_ONLY_FIN                -- Private - NCHS USE ONLY
+      ,COALESCE(E.ACTUAL_ARRIVAL_DT_TM, 
+                E.REGISTRATION_DT_TM, 
+                E.INPATIENT_ADMIT_DT_TM)     AS NCHS_ONLY_ENCOUNTER_TS       -- Private - NCHS USE ONLY
+      ,O.SURGERY_START_TS                    AS NCHS_ONLY_SURGERY_START_TS   -- Private - NCHS USE ONLY       
+      ,DATEDIFF(DAY, 
+         NCHS_ONLY_SURGERY_START_TS, 
+         NCHS_ONLY_ENCOUNTER_TS)             AS NCHS_ONLY_DAYS_SINCE_SURGERY -- Private - NCHS USE ONLY
+      ,O.NCHS_ONLY_SURGICAL_CASE_ID          AS NCHS_ONLY_SURGICAL_CASE_ID   -- Private - NCHS USE ONLY
+      ,O.SURGICAL_CASE_IDENTIFIER            AS OR_SURGICAL_CASE_IDENTIFIER
+      ,E_TOKEN.ENC_REIDENT                   AS OR_ENCOUNTER_IDENTIFIER      -- De-Identified/Tokenized
+      ,E_TOKEN.ENC_REIDENT                   AS ED_ENCOUNTER_IDENTIFIER      -- De-Identified/Tokenized
+      ,E.ACTUAL_ARRIVAL_DT_TM                AS ED_ARRIVAL_TS
+      ,CURRENT_TIMESTAMP                     AS DW_UPDATE_TS
+FROM MCHS_CUSTOM_DB.ODS.CDS_F_ENCOUNTER E
+JOIN MCHS_CUSTOM_DB.SPRUCE.SURGICAL_CASE_OR O 
+  ON O.NCHS_ONLY_PERSON_ID = E.PERSON_ID
+ AND O.NCHS_ONLY_ENCOUNTER_ID = E.ENCOUNTER_ID 
+LEFT JOIN MCHS_CUSTOM_DB.STG_OTHER.REIDENT_ENCOUNTER E_TOKEN
+  ON E_TOKEN.ENCNTR_ID = E.ENCOUNTER_ID
+LEFT JOIN MCHS_CUSTOM_DB.RESEARCH.PERSON_HASH_MRN    MRN_TOKEN
+  ON MRN_TOKEN.PERSON_ID = E.PERSON_ID
+WHERE E.ENCOUNTER_TYPE_DESC IN ('Emergency')
+ORDER BY NCHS_ONLY_PERSON_ID
+        ,NCHS_ONLY_ENCOUNTER_TS
+        ,NCHS_ONLY_SURGERY_START_TS
+);  
+
+-- Validation:
+-- The following will no return records, as the ADMISSION_TYPE_DESC = 'Elective' for this surgical case, not 'Emergency'
+--SELECT *
+--FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ED_ARRIVALS
+--WHERE OR_SURGICAL_CASE_IDENTIFIER = 'MAIN-2024-3835'; 
+
+SELECT *
+FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ED_ARRIVALS
+WHERE NCHS_ONLY_PERSON_ID = 8717234
+ORDER BY NCHS_ONLY_PERSON_ID
+        ,NCHS_ONLY_ENCOUNTER_TS
+        ,NCHS_ONLY_SURGERY_START_TS;
+
+
+SELECT NCHS_ONLY_ENCOUNTER_ID || '-' || NCHS_ONLY_SURGICAL_CASE_ID AS PK -- UNIQUE KEY
+      ,COUNT(*)
+FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ED_ARRIVALS
+GROUP BY NCHS_ONLY_ENCOUNTER_ID || '-' || NCHS_ONLY_SURGICAL_CASE_ID 
+HAVING COUNT(*) > 1
+ORDER BY 1; 
+
+SELECT *
+FROM MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_ED_ARRIVALS
+WHERE NCHS_ONLY_ENCOUNTER_ID || '-' || NCHS_ONLY_SURGICAL_CASE_ID = '55312832-487855130'

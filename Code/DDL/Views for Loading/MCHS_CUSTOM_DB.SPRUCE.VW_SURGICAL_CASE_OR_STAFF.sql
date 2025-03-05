@@ -1,5 +1,6 @@
 -- MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_STAFF.sql
 -- RM 2025.01.28 - Creation
+-- RM 2025.02.26 - Added new role mappings using AdaptX' email of 2025.02.25 
 
 CREATE OR REPLACE VIEW MCHS_CUSTOM_DB.SPRUCE.VW_SURGICAL_CASE_OR_STAFF AS (
 SELECT DISTINCT
@@ -17,14 +18,26 @@ SELECT DISTINCT
         CHR(00),''),CHR(13),''),CHR(10),''))           AS STAFF_NAME
       ,CASE CV.DISPLAY
          WHEN 'Anesthesiologist of Record' THEN 'Anesthesiologist'
-         WHEN 'Fellow - Anesthesia'        THEN 'Anesthesia Fellow'
+         WHEN 'Assistant - Anesthesia'     THEN 'CRNA'
+         WHEN 'Assistant - Surgical'       THEN 'Surgical Tech'
          WHEN 'CRNA'                       THEN 'CRNA'  
+         WHEN 'Circulator - Other'         THEN 'Circulating Nurse'
+         WHEN 'Circulator - Primary'       THEN 'Circulating Nurse'
+         WHEN 'Circulator - Relief'        THEN 'Circulating Nurse'
+         WHEN 'Co-Surgeon'                 THEN 'Surgeon'
+         WHEN 'Fellow - Anesthesia'        THEN 'Anesthesia Fellow'
          WHEN 'Nurse - PACU I'             THEN 'PACU Nurse'
          WHEN 'Nurse - PACU II'            THEN 'PACU Nurse'
          WHEN 'Nurse - PreOp'              THEN 'Pre-op Nurse'
          WHEN 'Primary Surgeon'            THEN 'Attending Surgeon'
          WHEN 'Resident - Anesthesia'      THEN 'Anesthesia Resident'
          WHEN 'Resident - Surgical'        THEN 'Surgery Resident'
+         WHEN 'Scrub - Other'              THEN 'Surgical Tech'
+         WHEN 'Scrub - Primary'            THEN 'Surgical Tech'
+         WHEN 'Scrub - Private'            THEN 'Surgical Tech'
+         WHEN 'Scrub - Relief'             THEN 'Surgical Tech'
+         WHEN 'Surgeon - Other'            THEN 'Surgeon'
+         WHEN 'Tech - Anesthesia'          THEN 'Anesthesia Tech'
          ELSE '<UNKNOWN>'
        END                                             AS STAFF_ROLE
       ,CURRENT_TIMESTAMP                               AS DW_UPDATE_TS 
